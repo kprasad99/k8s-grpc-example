@@ -1,0 +1,10 @@
+
+dependencies {
+    compile project(':person-proto')
+}
+
+bootJar {
+    enabled = true
+    layered()
+}
+

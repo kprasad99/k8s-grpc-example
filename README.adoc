@@ -1,0 +1,80 @@
+= Spring Boot WEBFLUX+GRPC in Kubernetes
+
+An example Project for Reactive Spring Boot with GRPC in Kubernetes with inter microservices communication using GRPC
+
+NOTE: Does not use `spring-cloud-kubernetes`.
+
+[ditaa]
+----
+    +---------------------------------------------------------+                +---------------------------------------------------------+
+    |                  MS1: Person Service       [PORT:8181]  |                |            MS2: Person Database Service    [HTTP=8080]  |
+    |                                                         |                |                                            [GRPC=6565]  |
+    | +------------------+       +------------------------+   |                |  +---------------------+                                |
+ <--+>| /api/person      |<----->|    webflux client      |<--+----------------+->| /api/db/person      |<---+     +------------------+  |
+    | +------------------+       +------------------------+   |                |  +---------------------+    |     |{s}    H2         |  |
+    |                                                         |                |                             +---->|                  |  |
+    | +------------------+       +------------------------+   |                |  +---------------------+    |     |                  |  |
+ <--+>| /api/grpc/person |<----->| grpc req-stream client |<--+----------------+->| grpc service        |<---+     |                  |  |
+    | +------------------+       +------------------------+   |                |  +---------------------+          +------------------+  |
+    |                                                         |                |                                                         |
+    +---------------------------------------------------------+                +---------------------------------------------------------+
+----
+
+
+== Run Locally before deploying to kubernetes.
+
+* Clone the project.
+* In first terminal, run below command.
++
+----
+$ ./gradlew person-db-service:bootRun
+----
+NOTE: on windows replace `./gradlew` with `gradlew.bat`
+
+* open second terminal and run below command
++
+----
+$ ./gradlew -Dserver.port=8181 person-service:bootRun
+----
+
+* Now you can run following endpoints from browser.
+** GRPC based client: `http://localhost:8181/api/rsoc/person`
+** Webflux based client: `http://localhost:8181/api/person`
+
+== Build Docker image
+
+* Build `person-db-service` docker image
++
+-----
+$ docker build -f DockerfileDb . -t kprasad99/person-db-service
+-----
+
+* Build `person-service` docker image
++
+-----
+$ docker build -f DockerfileFe . -t kprasad99/person-service
+-----
+
+* Save docker images, copy to kubernetes worker nodes and load the images
++
+----
+$ docker save -o app.tar kprasad99/person-db-service kprasad99/person-service
+----
+
+== Deploy to kubernetes
+
+* Got `helm/k8s-grpc-example directory and execute below command to deploy apps
++
+----
+$ helm install k8s-grpc-example .
+----
+
+== Verification
+
+* You can execute below curl command to test.
++
+----
+$ curl -H "Host:person.kprasad99.github.io" http://192.168.56.240/api/grpc/person/stream
+----
++
+NOTE: Other endpoints are `/api/grpc/person/list` and `/api/person`(webflux client)

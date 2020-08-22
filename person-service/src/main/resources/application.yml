@@ -1,0 +1,7 @@
+
+grpc:
+  enabled: false
+person.service:
+  ports:
+    http: 8080
+    grpc: 6565

@@ -1,0 +1,6 @@
+rootProject.name = 'k8s-grpc-example'
+
+include 'person-db-service'
+include 'person-proto'
+include 'person-service'
+
